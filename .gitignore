@@ -1,6 +1,7 @@
 __pycache__/
 .playwright-cli/
 output/
+slides_build/
 *.pyc
 *.pyo
 *.pyd
