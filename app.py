@@ -23,6 +23,7 @@ from statsmodels.tsa.arima.model import ARIMA
 
 
 def login() -> bool:
+    """Render the sidebar login form and return True for valid demo credentials."""
     st.sidebar.title("Login")
     username = st.sidebar.text_input("Username")
     password = st.sidebar.text_input("Password", type="password")
@@ -294,6 +295,7 @@ with st.expander("How to read this dashboard"):
 
 @st.cache_data
 def build_demo_dataset() -> pd.DataFrame:
+    """Generate a realistic demo retail dataset for local runs and presentations."""
     rng = np.random.default_rng(42)
     dates = pd.date_range("2020-01-01", "2025-12-31", freq="D")
     categories = ["Furniture", "Office Supplies", "Technology", "Clothing", "Appliances", "Food & Beverages"]
@@ -369,6 +371,7 @@ def build_demo_dataset() -> pd.DataFrame:
 
 @st.cache_data
 def load_data(uploaded_file) -> pd.DataFrame:
+    """Load an uploaded CSV, a local sample file, or the generated demo dataset."""
     if uploaded_file is not None:
         return pd.read_csv(uploaded_file, encoding="latin1")
 
@@ -380,6 +383,7 @@ def load_data(uploaded_file) -> pd.DataFrame:
 
 
 def safe_mape(actual: np.ndarray, predicted: np.ndarray) -> float:
+    """Calculate MAPE while ignoring zero actual values to avoid divide-by-zero errors."""
     actual = np.array(actual, dtype=float)
     predicted = np.array(predicted, dtype=float)
     mask = actual != 0
@@ -389,6 +393,7 @@ def safe_mape(actual: np.ndarray, predicted: np.ndarray) -> float:
 
 
 def score_sentiment(text: str) -> str:
+    """Classify review text as Positive, Negative, or Neutral using keyword scoring."""
     positive_words = {"great", "excellent", "happy", "fast", "good", "recommend", "easy", "quality"}
     negative_words = {"poor", "slow", "damaged", "disappointing", "bad", "late", "issue", "problem"}
     text_lower = str(text).lower()
@@ -402,6 +407,7 @@ def score_sentiment(text: str) -> str:
 
 
 def ensure_supporting_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Add optional dashboard columns when an uploaded dataset does not include them."""
     df = df.copy()
     if "Segment" not in df.columns:
         df["Segment"] = "General"
@@ -426,6 +432,7 @@ def ensure_supporting_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_customer_segments(filtered: pd.DataFrame) -> pd.DataFrame:
+    """Create customer segments from monetary value, purchase frequency, and recency."""
     customer_summary = (
         filtered.groupby("Customer ID")
         .agg(
@@ -452,6 +459,7 @@ def build_customer_segments(filtered: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_basket_pairs(filtered: pd.DataFrame) -> pd.DataFrame:
+    """Find the most common sub-category pairs purchased in the same order."""
     if "Order ID" not in filtered.columns or "Sub-Category" not in filtered.columns:
         return pd.DataFrame(columns=["Product Pair", "Orders Together"])
     pair_counts = {}
@@ -476,6 +484,7 @@ def build_export_package(
     anomalies: pd.DataFrame,
     customer_segments: pd.DataFrame,
 ) -> bytes:
+    """Build an Excel workbook with model, forecast, anomaly, and customer sheets."""
     import io
 
     output = io.BytesIO()
@@ -497,6 +506,7 @@ def generate_business_insights(
     volatility: float,
     projected_change: float,
 ) -> list[str]:
+    """Convert numeric analytics results into plain-language business insights."""
     insights = []
     recent_values = monthly["y"].tail(4).tolist()
     if len(recent_values) >= 4 and recent_values[-1] < recent_values[-2] < recent_values[-3]:
@@ -541,6 +551,7 @@ def build_pdf_report(
     performance_df: pd.DataFrame,
     insights: list[str],
 ) -> bytes:
+    """Create a PDF executive report with KPIs, charts, model scores, and insights."""
     import io
 
     output = io.BytesIO()
@@ -635,6 +646,7 @@ def build_pdf_report(
 
 
 def compute_regional_growth(filtered: pd.DataFrame, target: str) -> pd.DataFrame:
+    """Compare each region's latest month with its previous month and rank growth."""
     regional_monthly = (
         filtered.groupby(["Region", pd.Grouper(key="Order Date", freq="ME")])[target]
         .sum()
@@ -664,6 +676,7 @@ def compute_regional_growth(filtered: pd.DataFrame, target: str) -> pd.DataFrame
 
 
 def prophet_model(train_df: pd.DataFrame, forecast_period: int) -> pd.DataFrame:
+    """Forecast future monthly values with Prophet."""
     model = Prophet(yearly_seasonality=True, weekly_seasonality=False, daily_seasonality=False)
     model.fit(train_df)
     future = model.make_future_dataframe(periods=forecast_period, freq="ME")
@@ -672,6 +685,7 @@ def prophet_model(train_df: pd.DataFrame, forecast_period: int) -> pd.DataFrame:
 
 
 def linear_model(train_df: pd.DataFrame, forecast_period: int) -> pd.DataFrame:
+    """Forecast future monthly values with a simple time-based linear regression."""
     train_copy = train_df.copy()
     train_copy["time"] = np.arange(len(train_copy))
 
@@ -693,6 +707,7 @@ def linear_model(train_df: pd.DataFrame, forecast_period: int) -> pd.DataFrame:
 
 
 def arima_model(train_df: pd.DataFrame, forecast_period: int) -> pd.DataFrame:
+    """Forecast future monthly values with an ARIMA time-series model."""
     model = ARIMA(train_df["y"], order=(1, 1, 1))
     fit = model.fit()
     forecast = fit.forecast(steps=forecast_period)
@@ -709,6 +724,7 @@ def arima_model(train_df: pd.DataFrame, forecast_period: int) -> pd.DataFrame:
 
 
 def train_and_score_models(monthly: pd.DataFrame, forecast_period: int) -> tuple[dict, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Train all forecasting models and compare them with MAE, RMSE, and MAPE."""
     train = monthly.iloc[:-forecast_period].copy()
     test = monthly.iloc[-forecast_period:].copy()
 
