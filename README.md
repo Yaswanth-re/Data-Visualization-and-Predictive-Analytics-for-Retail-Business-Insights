@@ -152,5 +152,4 @@ This project is useful for retail decision support because it combines descripti
 - Deploy the dashboard publicly with Streamlit Community Cloud or another hosting platform
 
 ## Author
-
-Final year academic project on retail business analytics and decision support.
+ academic project on retail business analytics and decision support.
